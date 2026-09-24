@@ -1,0 +1,17 @@
+{
+  "name": "fi-idp-mock",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mock Financial Institution Identity Provider: OAuth2 password-grant login, RS256 JWT issuance, JWKS discovery",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "jose": "^6.2.12"
+  }
+}

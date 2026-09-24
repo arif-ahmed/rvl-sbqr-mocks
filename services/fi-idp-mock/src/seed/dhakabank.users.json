@@ -1,0 +1,43 @@
+{
+  "fi": {
+    "id": "dhakabank",
+    "name": "Dhaka Bank"
+  },
+  "users": [
+    {
+      "username": "fatema",
+      "password": "fatema@1234",
+      "displayName": "Fatema Akter",
+      "customerId": "CIF-00458821",
+      "status": "active"
+    },
+    {
+      "username": "rafiq",
+      "password": "rafiq@1234",
+      "displayName": "Rafiq Islam",
+      "customerId": "CIF-00458822",
+      "status": "active"
+    },
+    {
+      "username": "karim",
+      "password": "karim@1234",
+      "displayName": "Karim Hossain",
+      "customerId": "CIF-00458823",
+      "status": "active"
+    },
+    {
+      "username": "nasrin",
+      "password": "nasrin@1234",
+      "displayName": "Nasrin Sultana",
+      "customerId": "CIF-00458824",
+      "status": "locked"
+    },
+    {
+      "username": "jalal",
+      "password": "jalal@1234",
+      "displayName": "Jalal Uddin",
+      "customerId": "CIF-00458825",
+      "status": "password_expired"
+    }
+  ]
+}

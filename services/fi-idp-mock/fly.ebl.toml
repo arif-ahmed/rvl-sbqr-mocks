@@ -1,0 +1,33 @@
+# Fly.io config for the Eastern Bank instance of fi-idp-mock.
+# One app per FI: deploy with `fly deploy -c fly.ebl.toml`.
+# After the first deploy, set the public issuer (or rely on the
+# FLY_APP_NAME fallback, which derives it automatically):
+#   fly secrets set -a fi-idp-ebl ISSUER=https://fi-idp-ebl.fly.dev
+app = 'fi-idp-ebl'
+primary_region = 'sin'
+
+[env]
+  FI_ID = 'ebl'
+  FI_NAME = 'Eastern Bank'
+  AUDIENCE = 'sbqr-fi-gateway'
+  TOKEN_TTL_SECONDS = '300'
+  REFRESH_TTL_SECONDS = '86400'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = '10s'
+    interval = '30s'
+    method = 'GET'
+    path = '/health'
+    timeout = '2s'
+
+[[vm]]
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 256

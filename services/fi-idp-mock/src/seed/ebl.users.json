@@ -1,0 +1,36 @@
+{
+  "fi": {
+    "id": "ebl",
+    "name": "Eastern Bank"
+  },
+  "users": [
+    {
+      "username": "tanvir",
+      "password": "tanvir@1234",
+      "displayName": "Tanvir Ahmed",
+      "customerId": "CIF-00910011",
+      "status": "active"
+    },
+    {
+      "username": "shabnam",
+      "password": "shabnam@1234",
+      "displayName": "Shabnam Chowdhury",
+      "customerId": "CIF-00910012",
+      "status": "active"
+    },
+    {
+      "username": "monira",
+      "password": "monira@1234",
+      "displayName": "Monira Begum",
+      "customerId": "CIF-00910013",
+      "status": "locked"
+    },
+    {
+      "username": "faruk",
+      "password": "faruk@1234",
+      "displayName": "Faruk Hossain",
+      "customerId": "CIF-00910014",
+      "status": "password_expired"
+    }
+  ]
+}
