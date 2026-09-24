@@ -7,6 +7,7 @@ app = 'fi-idp-dhakabank'
 primary_region = 'sin'
 
 [env]
+  PORT = '8080'
   FI_ID = 'dhakabank'
   FI_NAME = 'Dhaka Bank'
   AUDIENCE = 'sbqr-fi-gateway'
