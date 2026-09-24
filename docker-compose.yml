@@ -1,0 +1,27 @@
+# rvl-sbqr-mocks — local orchestration for the mock services (scaffolding only).
+#
+# Each service builds from its own placeholder Dockerfile. Ports,
+# environment, volumes, and health checks are intentionally left out
+# until the services are implemented — add them per service at that time.
+#
+# Usage (once services are implemented):
+#   docker compose up --build
+
+services:
+  fi-idp-mock:
+    build:
+      context: ./services/fi-idp-mock
+      dockerfile: Dockerfile
+    # ports: ["5105:5105"]  # TODO: assign when fi-idp-mock is implemented.
+
+  bb-trust-store-mock:
+    build:
+      context: ./services/bb-trust-store-mock
+      dockerfile: Dockerfile
+    # ports: ["8082:8082"]  # TODO: assign when bb-trust-store-mock is implemented.
+
+  hsm-mock:
+    build:
+      context: ./services/hsm-mock
+      dockerfile: Dockerfile
+    # ports: ["8200:8200"]  # TODO: assign when hsm-mock is implemented.
