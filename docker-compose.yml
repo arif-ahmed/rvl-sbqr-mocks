@@ -4,6 +4,11 @@
 #   - fi-idp-dhakabank  :5105  issuer http://localhost:5105
 #   - fi-idp-ebl        :5106  issuer http://localhost:5106
 #
+# sbqr-api-mock is the spec-conformant upstream stand-in (BanglaQR P2P,
+# Ed25519-signed payloads, full verdict vocabulary) on :5201. A
+# containerised BFF must point Platform__BaseUrl at
+# http://sbqr-api-mock:5201; a host-run BFF keeps http://localhost:5201.
+#
 # NOTE: the BFF (rvl-sbqr-fi-gateway) validates a single issuer, so each
 # FI needs its own BFF pointed at that FI's IdP:
 #   Auth__Authority=http://localhost:5105 Auth__Issuer=http://localhost:5105 ...
@@ -45,6 +50,21 @@ services:
       AUDIENCE: sbqr-fi-gateway
     ports:
       - "5106:5106"
+    restart: unless-stopped
+
+  # sbqr-api-mock — spec-conformant upstream stand-in (BanglaQR P2P,
+  # Ed25519-signed). Containerised BFFs must point
+  # Platform__BaseUrl at http://sbqr-api-mock:5201 instead of localhost.
+  sbqr-api-mock:
+    build:
+      context: ./services/sbqr-api-mock
+      dockerfile: Dockerfile
+    container_name: sbqr-mocks-sbqr-api
+    environment:
+      PORT: "5201"
+      INSTITUTION: "000085"
+    ports:
+      - "5201:5201"
     restart: unless-stopped
 
   # bb-trust-store-mock:

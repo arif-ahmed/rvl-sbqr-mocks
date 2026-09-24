@@ -162,6 +162,13 @@ should POST credentials to `/connect/token` and store
 `access_token` + `refresh_token`, refreshing on expiry — plus an FI
 switcher mapping FI → `{IDP_URL, ISSUER, AUDIENCE, BFF_URL}`.
 
+For the upstream side, the BFF now talks to
+[`sbqr-api-mock`](../sbqr-api-mock/README.md) in this repo on
+`:5201`. The deprecated `tmp/fakes/fake-sbqr-api.js` family in
+`rvl-sbqr-fi-gateway` (placeholder strings, not BanglaQR) remains
+only as a CI smoke-test fixture — `sbqr-api-mock` is the canonical
+spec-conformant stand-in.
+
 ## Layout
 
 ```text
