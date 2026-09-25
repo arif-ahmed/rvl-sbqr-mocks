@@ -1,0 +1,347 @@
+{
+  "info": {
+    "_postman_id": "fi-idp-mock-local-test",
+    "name": "fi-idp-mock - local test",
+    "description": "Ready-to-import Postman collection for services/fi-idp-mock. Run the mock first (docker compose up --build or FI_ID=dhakabank PORT=5105 node src/server.js), then Run in order 1-8. See services/fi-idp-mock/README.md.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5105",
+      "description": "Dhaka Bank mock. Switch to http://localhost:5106 for EBL."
+    },
+    {
+      "key": "eblBaseUrl",
+      "value": "http://localhost:5106",
+      "description": "Eastern Bank mock instance"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "description": "Auto-saved by '04 - Login success' test script"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Liveness probe. Expect 200 {status: ok, fi_id, fi_name, users}."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('has fi_id', () => {",
+              "  const j = pm.response.json();",
+              "  pm.expect(j.status).to.eql('ok');",
+              "  pm.expect(j.fi_id).to.be.a('string');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - OIDC Discovery",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/.well-known/openid-configuration",
+          "host": ["{{baseUrl}}"],
+          "path": [".well-known", "openid-configuration"]
+        },
+        "description": "Expect 200 with issuer, jwks_uri, token_endpoint. issuer must equal baseUrl."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('issuer matches baseUrl', () => {",
+              "  const j = pm.response.json();",
+              "  pm.expect(j.issuer).to.eql(pm.collectionVariables.get('baseUrl'));",
+              "  pm.expect(j.jwks_uri).to.include('jwks');",
+              "  pm.expect(j.token_endpoint).to.include('/connect/token');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - JWKS",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/.well-known/jwks.json",
+          "host": ["{{baseUrl}}"],
+          "path": [".well-known", "jwks.json"]
+        },
+        "description": "Expect 200, keys[0].kid=dev-key-1, alg=RS256."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('RS256 key', () => {",
+              "  const j = pm.response.json();",
+              "  pm.expect(j.keys[0].alg).to.eql('RS256');",
+              "  pm.expect(j.keys[0].kid).to.eql('dev-key-1');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Login success (fatema / dhakabank)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "password", "type": "text" },
+            { "key": "username", "value": "fatema", "type": "text" },
+            { "key": "password", "value": "fatema@1234", "type": "text" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/connect/token",
+          "host": ["{{baseUrl}}"],
+          "path": ["connect", "token"]
+        },
+        "description": "Active user. Expect 200 with access_token, id_token, refresh_token. Saves refresh_token to collection variable."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 with tokens', () => {",
+              "  pm.response.to.have.status(200);",
+              "  const j = pm.response.json();",
+              "  pm.expect(j.access_token).to.be.a('string');",
+              "  pm.expect(j.id_token).to.be.a('string');",
+              "  pm.expect(j.refresh_token).to.be.a('string');",
+              "  pm.expect(j.token_type).to.eql('Bearer');",
+              "  pm.collectionVariables.set('refresh_token', j.refresh_token);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Wrong password -> invalid_grant",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "password", "type": "text" },
+            { "key": "username", "value": "fatema", "type": "text" },
+            { "key": "password", "value": "wrong", "type": "text" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/connect/token",
+          "host": ["{{baseUrl}}"],
+          "path": ["connect", "token"]
+        },
+        "description": "Expect 400 error=invalid_grant."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('400 invalid_grant', () => {",
+              "  pm.response.to.have.status(400);",
+              "  pm.expect(pm.response.json().error).to.eql('invalid_grant');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Locked account (nasrin) -> account_locked",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "password", "type": "text" },
+            { "key": "username", "value": "nasrin", "type": "text" },
+            { "key": "password", "value": "nasrin@1234", "type": "text" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/connect/token",
+          "host": ["{{baseUrl}}"],
+          "path": ["connect", "token"]
+        },
+        "description": "Expect 400 error=account_locked. On EBL use monira / {{eblBaseUrl}}."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('400 account_locked', () => {",
+              "  pm.response.to.have.status(400);",
+              "  pm.expect(pm.response.json().error).to.eql('account_locked');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Expired password (jalal) -> password_expired",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "password", "type": "text" },
+            { "key": "username", "value": "jalal", "type": "text" },
+            { "key": "password", "value": "jalal@1234", "type": "text" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/connect/token",
+          "host": ["{{baseUrl}}"],
+          "path": ["connect", "token"]
+        },
+        "description": "Expect 400 error=password_expired. On EBL use faruk / {{eblBaseUrl}}."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('400 password_expired', () => {",
+              "  pm.response.to.have.status(400);",
+              "  pm.expect(pm.response.json().error).to.eql('password_expired');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - Refresh token (rotates)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "refresh_token", "type": "text" },
+            { "key": "refresh_token", "value": "{{refresh_token}}", "type": "text" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/connect/token",
+          "host": ["{{baseUrl}}"],
+          "path": ["connect", "token"]
+        },
+        "description": "Run after 04. Expect 200 with fresh pair + rotation. Re-running with the SAME token must give 400 invalid_grant."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('200 refreshed', () => {",
+              "  pm.response.to.have.status(200);",
+              "  const j = pm.response.json();",
+              "  pm.expect(j.access_token).to.be.a('string');",
+              "  pm.collectionVariables.set('refresh_token', j.refresh_token);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - Unsupported grant -> unsupported_grant_type",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [{ "key": "grant_type", "value": "client_credentials", "type": "text" }]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/connect/token",
+          "host": ["{{baseUrl}}"],
+          "path": ["connect", "token"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('400 unsupported_grant_type', () => {",
+              "  pm.response.to.have.status(400);",
+              "  pm.expect(pm.response.json().error).to.eql('unsupported_grant_type');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - EBL Login success (tanvir)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "password", "type": "text" },
+            { "key": "username", "value": "tanvir", "type": "text" },
+            { "key": "password", "value": "tanvir@1234", "type": "text" }
+          ]
+        },
+        "url": {
+          "raw": "{{eblBaseUrl}}/connect/token",
+          "host": ["{{eblBaseUrl}}"],
+          "path": ["connect", "token"]
+        },
+        "description": "Proves second FI instance works with its own issuer. Expect iss=http://localhost:5106."
+      }
+    }
+  ]
+}
