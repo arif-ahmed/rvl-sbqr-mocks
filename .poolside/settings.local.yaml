@@ -1,0 +1,25 @@
+tools:
+    shell:
+        allow:
+            - find *
+            - head *
+            - ls *
+            - Get-ChildItem *
+            - Select-Object *
+            - ForEach-Object { *
+            - Where-Object { *
+            - git branch *
+            - Write-Host "---STATUS---"
+            - git status
+            - Write-Host "---LOG---"
+            - git log *
+            - node *
+            - cd *
+            - Start-Sleep *
+            - Write-Host *
+            - curl *
+            - ConvertFrom-Json
+            - $resp *
+            - Remove-Item *
+            - Select-String *
+            - git *

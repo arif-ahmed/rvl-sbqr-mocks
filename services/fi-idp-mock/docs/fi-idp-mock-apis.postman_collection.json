@@ -1,0 +1,168 @@
+{
+  "info": {
+    "_postman_id": "fi-idp-mock-apis-to-test",
+    "name": "fi-idp-mock - APIs to test (case-insensitive)",
+    "description": "Clean list of fi-idp-mock API requests to test. NOT case-specific: POST /connect/token lowercases the username before lookup, so FATEMA / FaTeMa / fatema all target the same account (the password must still match the seed). Only real APIs are listed here; the deprecated /mint backdoor is intentionally excluded (see README 'Endpoints').\n\nRun the mock first: docker compose up --build  (Dhaka Bank on :5105, EBL on :5106)\n  or: FI_ID=dhakabank PORT=5105 node src/server.js\n\nThis collection is a plain listing of APIs to poke — no pm.test assertion scripts, no pass/fail scenarios. Error behaviour (invalid_grant, account_locked, password_expired, unsupported_grant_type) is documented in services/fi-idp-mock/README.md under 'POST /connect/token'.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5105",
+      "description": "Dhaka Bank mock. Switch to http://localhost:5106 for EBL via eblBaseUrl."
+    },
+    {
+      "key": "eblBaseUrl",
+      "value": "http://localhost:5106",
+      "description": "Eastern Bank mock instance"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "description": "Paste a refresh_token obtained from a password-grant login (items 04-06) to use in the refresh request (item 07)."
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "GET /health — liveness probe. Expect 200 { status, fi_id, fi_name, issuer, users }."
+      }
+    },
+    {
+      "name": "02 - OIDC Discovery",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/.well-known/openid-configuration",
+          "host": ["{{baseUrl}}"],
+          "path": [".well-known", "openid-configuration"]
+        },
+        "description": "GET /.well-known/openid-configuration — OIDC discovery. Expect 200 with issuer, jwks_uri, token_endpoint, grant_types_supported (password, refresh_token), scopes_supported and claims_supported."
+      }
+    },
+    {
+      "name": "03 - JWKS",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/.well-known/jwks.json",
+          "host": ["{{baseUrl}}"],
+          "path": [".well-known", "jwks.json"]
+        },
+        "description": "GET /.well-known/jwks.json — RSA public signing key. Expect 200 { keys: [ { kid, alg: 'RS256', ... } ] }."
+      }
+    },
+    {
+      "name": "04 - POST /connect/token (password grant, fatema)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "password", "type": "text" },
+            { "key": "username", "value": "fatema", "type": "text" },
+            { "key": "password", "value": "fatema@1234", "type": "text" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/connect/token",
+          "host": ["{{baseUrl}}"],
+          "path": ["connect", "token"]
+        },
+        "description": "POST /connect/token — password grant (active user, lowercase seed username). Expect 200 { access_token, id_token, refresh_token, token_type: 'Bearer', expires_in, scope, refresh_expires_in }. access_token sub = 'user-fatema'."
+      }
+    },
+    {
+      "name": "05 - POST /connect/token (password grant, FATEMA — case-insensitive)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "password", "type": "text" },
+            { "key": "username", "value": "FATEMA", "type": "text" },
+            { "key": "password", "value": "fatema@1234", "type": "text" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/connect/token",
+          "host": ["{{baseUrl}}"],
+          "path": ["connect", "token"]
+        },
+        "description": "NOT case-specific: UPPERCASE username 'FATEMA' resolves to the same fatema account as item 04. Expect 200, access_token sub = 'user-fatema' (lowercased)."
+      }
+    },
+    {
+      "name": "06 - POST /connect/token (password grant, FaTeMa — case-insensitive)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "password", "type": "text" },
+            { "key": "username", "value": "FaTeMa", "type": "text" },
+            { "key": "password", "value": "fatema@1234", "type": "text" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/connect/token",
+          "host": ["{{baseUrl}}"],
+          "path": ["connect", "token"]
+        },
+        "description": "NOT case-specific: MixedCase username 'FaTeMa' resolves to the same fatema account. Expect 200, access_token sub = 'user-fatema'."
+      }
+    },
+    {
+      "name": "07 - POST /connect/token (refresh grant, rotation)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "refresh_token", "type": "text" },
+            { "key": "refresh_token", "value": "{{refresh_token}}", "type": "text" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/connect/token",
+          "host": ["{{baseUrl}}"],
+          "path": ["connect", "token"]
+        },
+        "description": "POST /connect/token — refresh grant. Set {{refresh_token}} (from item 04/05/06) first. Expect 200 with a fresh access_token + new refresh_token; the old refresh_token is rotated (reusing it returns 400 invalid_grant)."
+      }
+    },
+    {
+      "name": "08 - POST /connect/token (unsupported grant_type)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "client_credentials", "type": "text" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/connect/token",
+          "host": ["{{baseUrl}}"],
+          "path": ["connect", "token"]
+        },
+        "description": "Only password and refresh_token grants are supported. Expect 400 { error: 'unsupported_grant_type' }."
+      }
+    }
+  ]
+}

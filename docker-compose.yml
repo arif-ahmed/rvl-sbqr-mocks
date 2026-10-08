@@ -55,17 +55,17 @@ services:
   # sbqr-api-mock — spec-conformant upstream stand-in (BanglaQR P2P,
   # Ed25519-signed). Containerised BFFs must point
   # Platform__BaseUrl at http://sbqr-api-mock:5201 instead of localhost.
-  sbqr-api-mock:
-    build:
-      context: ./services/sbqr-api-mock
-      dockerfile: Dockerfile
-    container_name: sbqr-mocks-sbqr-api
-    environment:
-      PORT: "5201"
-      INSTITUTION: "000085"
-    ports:
-      - "5201:5201"
-    restart: unless-stopped
+  # sbqr-api-mock:
+  #   build:
+  #     context: ./services/sbqr-api-mock
+  #     dockerfile: Dockerfile
+  #   container_name: sbqr-mocks-sbqr-api
+  #   environment:
+  #     PORT: "5201"
+  #     INSTITUTION: "000085"
+  #   ports:
+  #     - "5201:5201"
+  #   restart: unless-stopped
 
   # bb-trust-store-mock:
   #   build:
