@@ -4,7 +4,7 @@ One Docker image, one Fly app per FI (same pattern as local compose):
 
 | App | Fly hostname | Local port |
 |---|---|---|
-| `fi-idp-dhakabank` | `https://fi-idp-dhakabank.fly.dev` | `:5105` |
+| `idp-dhakabank-mock` | `https://idp-dhakabank-mock.fly.dev` | `:5105` |
 | `fi-idp-ebl` | `https://fi-idp-ebl.fly.dev` | `:5106` |
 
 Configs: `fly.dhakabank.toml`, `fly.ebl.toml` (in `services/fi-idp-mock/`).
@@ -54,7 +54,7 @@ fly tokens revoke <token-id>   # afterwards, or via dashboard Access Tokens
 
 ```powershell
 cd services\fi-idp-mock
-fly apps create fi-idp-dhakabank
+fly apps create idp-dhakabank-mock
 fly apps create fi-idp-ebl
 ```
 
@@ -62,7 +62,7 @@ Optional: pin the public issuer explicitly (normally unnecessary —
 `server.js` derives `https://<FLY_APP_NAME>.fly.dev` automatically):
 
 ```powershell
-fly secrets set -a fi-idp-dhakabank ISSUER=https://fi-idp-dhakabank.fly.dev
+fly secrets set -a idp-dhakabank-mock ISSUER=https://idp-dhakabank-mock.fly.dev
 fly secrets set -a fi-idp-ebl ISSUER=https://fi-idp-ebl.fly.dev
 ```
 
@@ -83,19 +83,19 @@ Expected tail: `Updating existing machines … rolling strategy`,
 ## 5. Verify (run after every deploy)
 
 ```powershell
-fly status -a fi-idp-dhakabank
-fly checks list -a fi-idp-dhakabank
-fly machine list -a fi-idp-dhakabank
-fly logs -a fi-idp-dhakabank
-curl.exe -s https://fi-idp-dhakabank.fly.dev/health; echo ""
-curl.exe -s -X POST https://fi-idp-dhakabank.fly.dev/connect/token `
+fly status -a idp-dhakabank-mock
+fly checks list -a idp-dhakabank-mock
+fly machine list -a idp-dhakabank-mock
+fly logs -a idp-dhakabank-mock
+curl.exe -s https://idp-dhakabank-mock.fly.dev/health; echo ""
+curl.exe -s -X POST https://idp-dhakabank-mock.fly.dev/connect/token `
   -d "grant_type=password&username=fatima&password=fatima@1234"
 ```
 
 Healthy state:
 
 - `fly status` → `CHECKS 1/1`, log line `on :8080`,
-  issuer `https://fi-idp-dhakabank.fly.dev`
+  issuer `https://idp-dhakabank-mock.fly.dev`
 - `/health` → `{"status":"ok","fi_id":"dhakabank",…,"users":5}` (EBL: `"users":4`)
 - `/connect/token` → `token_type: Bearer`, `expires_in: 300` + `refresh_token`
 

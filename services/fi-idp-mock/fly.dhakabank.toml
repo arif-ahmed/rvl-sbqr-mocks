@@ -2,8 +2,8 @@
 # One app per FI: deploy with `fly deploy -c fly.dhakabank.toml`.
 # After the first deploy, set the public issuer (or rely on the
 # FLY_APP_NAME fallback, which derives it automatically):
-#   fly secrets set -a fi-idp-dhakabank ISSUER=https://fi-idp-dhakabank.fly.dev
-app = 'fi-idp-dhakabank'
+#   fly secrets set -a idp-dhakabank-mock ISSUER=https://idp-dhakabank-mock.fly.dev
+app = 'idp-dhakabank-mock'
 primary_region = 'sin'
 
 [env]
