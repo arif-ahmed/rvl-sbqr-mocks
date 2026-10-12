@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Demo service: never indexed, never mistaken for a real bank. -->
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Simulation only — mock external bank QR generator for SBQR demos. Not a real bank." />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#16386b" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e1521" />
+  <script>
+    // Resolve the theme before first paint (no flash): saved choice wins,
+    // else follow the OS preference. Toggling sets data-theme explicitly.
+    (() => {
+      const saved = localStorage.getItem('extbank-theme');
+      const theme = saved === 'dark' || saved === 'light'
+        ? saved
+        : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+  <title>Shapla Pay — Shapla Commercial Bank PLC (Simulation)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #eef1f6; --card: #ffffff; --field: #ffffff; --ink: #1c2733; --muted: #5b6b7b;
+      --line: #dde4ea; --bank: #16386b; --bank-dark: #0f2749; --brand-text: #16386b;
+      --accent: #16386b; --accent-ink: #0f2749; --ghost-hover: #f2f7fc;
+      --gold: #c9a24b; --danger: #b3261e; --ok: #0b7a4b;
+      --ok-bg: #e8f6ee; --ok-line: #9fd4b8; --warn-bg: #fdf3e3; --warn-line: #eed3a8; --warn-ink: #8a5a00;
+      --demo: #b45309; --demo-bg: #fef3c7; --demo-line: #f3ddab;
+      --mono: ui-monospace, SFMono-Regular, Consolas, "Cascadia Mono", monospace;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0e1521; --card: #161f2e; --field: #1c283a; --ink: #e7ecf3; --muted: #97a5b8;
+      --line: #2b3950; --brand-text: #a9c7f5; --accent: #4a80d0; --accent-ink: #6ea3e8;
+      --ghost-hover: #223350; --danger: #ff9a91; --ok: #4ccf96;
+      --ok-bg: #123021; --ok-line: #2c6b4c; --warn-bg: #33270e; --warn-line: #6b5320; --warn-ink: #f6c76b;
+      --demo: #f6c76b; --demo-bg: #33270e; --demo-line: #6b5320;
+    }
+    [data-theme="dark"] .monogram {
+      background: radial-gradient(circle at 30% 30%, #37507e, #1b3055);
+      color: #dbe7ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--ink);
+      font: 15px/1.5 system-ui, "Segoe UI", Roboto, sans-serif;
+    }
+    .demo-bar {
+      background: var(--demo-bg); color: var(--demo); text-align: center;
+      font-size: 12px; font-weight: 700; letter-spacing: .08em; padding: 5px 12px;
+      border-bottom: 1px solid var(--demo-line);
+    }
+    header {
+      background: linear-gradient(135deg, var(--bank), var(--bank-dark)); color: #fff;
+      padding: 16px 24px; display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center;
+    }
+    .monogram {
+      width: 44px; height: 44px; border-radius: 50%; flex: 0 0 auto;
+      background: radial-gradient(circle at 30% 30%, #fff, #dbe7ff);
+      color: var(--bank); font-weight: 800; font-size: 20px;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid var(--gold);
+    }
+    .brand { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+    .brand h1 { font-size: 18px; margin: 0; font-weight: 650; }
+    .brand .tagline { font-size: 12px; opacity: .82; }
+    header .side { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .pill {
+      display: inline-block; font-size: 12px; padding: 2px 10px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.35); color: #fff; background: rgba(255,255,255,.10);
+      font-family: var(--mono);
+    }
+    .pill.demo { background: var(--demo-bg); color: var(--demo); border-color: var(--demo-line); font-weight: 700; letter-spacing: .05em; }
+    .pill.ok { border-color: var(--ok-line); background: var(--ok-bg); color: var(--ok); }
+    .pill.warn { border-color: var(--warn-line); background: var(--warn-bg); color: var(--warn-ink); }
+    .icon-btn {
+      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.35);
+      color: #fff; border-radius: 999px; width: 34px; height: 34px; font-size: 15px;
+      cursor: pointer; line-height: 1; padding: 0; flex: 0 0 auto;
+    }
+    .icon-btn:hover { background: rgba(255,255,255,.24); }
+    main { max-width: 880px; margin: 24px auto; padding: 0 16px; display: grid; gap: 16px; }
+    .card {
+      background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+      padding: 18px 20px;
+    }
+    .card h2 { font-size: 13px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+    .field { display: flex; flex-direction: column; gap: 4px; flex: 1 1 170px; }
+    label { font-size: 13px; color: var(--muted); }
+    input, select {
+      font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px;
+      background: var(--field); color: var(--ink); width: 100%;
+    }
+    input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+    button {
+      font: inherit; font-weight: 600; padding: 9px 18px; border: 0; border-radius: 7px;
+      background: var(--accent); color: #fff; cursor: pointer;
+    }
+    button:hover { background: var(--accent-ink); }
+    button.ghost { background: var(--field); color: var(--accent-ink); border: 1px solid var(--accent); }
+    button.ghost:hover, a.ghost:hover { background: var(--ghost-hover); }
+    button:disabled { opacity: .55; cursor: default; }
+    .kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; font-size: 14px; }
+    .kv dt { color: var(--muted); }
+    .kv dd { margin: 0; font-family: var(--mono); font-size: 13px; word-break: break-all; }
+    textarea {
+      width: 100%; min-height: 96px; resize: vertical; font-family: var(--mono); font-size: 12px;
+      padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px;
+      background: var(--field); color: var(--ink);
+    }
+    .msg { font-size: 13px; margin: 10px 0 0; min-height: 1em; }
+    .msg.err { color: var(--danger); }
+    .msg.ok { color: var(--ok); }
+    details summary { cursor: pointer; color: var(--muted); font-size: 13px; margin-top: 10px; }
+    a.ghost {
+      display: inline-block; font: inherit; font-weight: 600; padding: 9px 18px;
+      border-radius: 7px; background: var(--field); color: var(--accent-ink);
+      border: 1px solid var(--accent); cursor: pointer; text-decoration: none;
+    }
+    a.ghost:hover { background: var(--ghost-hover); }
+    .receipt { display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: start; }
+    .receipt img { border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 10px; width: 250px; height: 250px; }
+    .receipt .head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .receipt .head .mini {
+      width: 30px; height: 30px; border-radius: 50%; background: var(--bank); color: #fff;
+      font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center;
+      border: 1.5px solid var(--gold);
+    }
+    .receipt .amount { font-size: 24px; font-weight: 700; color: var(--brand-text); margin: 4px 0 10px; }
+    .sim-note { font-size: 12px; color: var(--demo); background: var(--demo-bg); border: 1px dashed var(--demo-line);
+      border-radius: 7px; padding: 6px 10px; margin-top: 12px; }
+    footer { text-align: center; color: var(--muted); font-size: 12px; padding: 8px 16px 28px; }
+    footer strong { color: var(--demo); }
+    @media (max-width: 640px) { .receipt { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">SIMULATION — DEMO SERVICE · NOT A REAL BANK · NO REAL ACCOUNTS OR TRANSACTIONS</div>
+  <header>
+    <div class="monogram" id="mono">S</div>
+    <div class="brand">
+      <h1 id="bankName">Shapla Commercial Bank PLC</h1>
+      <span class="tagline" id="tagline">Banking for every rhythm of life</span>
+    </div>
+    <div class="side">
+      <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle dark / light mode">🌙</button>
+      <span class="pill demo">DEMO</span>
+      <span class="pill" id="product">Shapla Pay</span>
+      <span class="pill" id="institutionId">Institution …</span>
+      <span class="pill" id="keyPill">key: checking…</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Bank signing key</h2>
+      <div class="kv">
+        <dt>Public key fingerprint</dt><dd id="fp">—</dd>
+        <dt>Public key (SPKI PEM)</dt>
+        <dd>
+          <button class="ghost" id="copyPub" disabled>Copy public key PEM</button>
+          <details>
+            <summary>show PEM</summary>
+            <textarea id="pubPem" readonly rows="4" spellcheck="false" disabled></textarea>
+          </details>
+        </dd>
+      </div>
+      <p class="msg" id="keyMsg"></p>
+      <button id="rotate">Generate new keypair (rotate)</button>
+    </section>
+
+    <section class="card">
+      <h2>Request a payment QR</h2>
+      <div class="row">
+        <div class="field" style="flex: 1 1 240px">
+          <label for="cust">Customer</label>
+          <select id="cust"><option value="">Manual entry…</option></select>
+        </div>
+        <div class="field">
+          <label for="name">Account name</label>
+          <input id="name" placeholder="Areeba Nawar" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="pan">Account number</label>
+          <input id="pan" placeholder="01711111111" autocomplete="off" />
+        </div>
+        <div class="field" style="flex: 0 1 130px">
+          <label for="amount">Amount (optional)</label>
+          <input id="amount" placeholder="1500.50" inputmode="decimal" autocomplete="off" />
+        </div>
+        <div class="field" style="flex: 0 0 auto">
+          <button id="gen">Generate</button>
+        </div>
+      </div>
+      <p class="msg" id="qrMsg">Name is whitespace-stripped before signing (spec §2.5: name ‖ pan, no space or symbol).</p>
+    </section>
+
+    <section class="card" id="resultCard" hidden>
+      <h2>Signed QR</h2>
+      <div class="receipt">
+        <img id="qrImg" alt="P2P payment QR code" />
+        <div>
+          <div class="head">
+            <span class="mini" id="rMono">S</span>
+            <div>
+              <div style="font-weight:650" id="rBank">—</div>
+              <div style="font-size:12px;color:var(--muted)" id="rProduct">—</div>
+            </div>
+          </div>
+          <div class="amount" id="rAmount">—</div>
+          <div class="kv">
+            <dt>Reference</dt><dd id="rRef">—</dd>
+            <dt>Institution ID</dt><dd id="rInst">—</dd>
+            <dt>Pay to</dt><dd id="rPayee">—</dd>
+            <dt>Signed payload</dt><dd id="rPayload">—</dd>
+            <dt>Signature (Base64)</dt><dd id="rSig">—</dd>
+          </div>
+          <details open>
+            <summary>EMVCo payload string</summary>
+            <textarea id="rEmv" readonly spellcheck="false"></textarea>
+          </details>
+          <button class="ghost" id="copyEmv">Copy EMVCo string</button>
+          <a class="ghost" id="dl" download hidden>Download PNG</a>
+          <div class="sim-note">Simulated QR from a demo service — validate it on the SBQR platform. Not a real bank instrument.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <strong>Simulation only.</strong> external-bank-mock — demo stand-in for a non-tenant external bank in SBQR
+    development. Fictional bank; no affiliation with any real financial institution. Never seed this key on a production platform.
+  </footer>
+
+  <script type="module">
+    const $ = (id) => document.getElementById(id);
+
+    async function api(path, opts) {
+      const res = await fetch(path, opts);
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || body.error_description || `${res.status} ${res.statusText}`);
+      return body;
+    }
+
+    async function loadKeyInfo() {
+      try {
+        const k = await api('/api/keys/public');
+        $('keyPill').textContent = 'key: loaded';
+        $('keyPill').className = 'pill ok';
+        $('fp').textContent = `sha256:${k.publicKeySha256}`;
+        $('pubPem').value = k.publicKeyPem;
+        $('pubPem').disabled = false;
+        $('copyPub').disabled = false;
+        $('keyMsg').className = 'msg ok';
+        $('keyMsg').textContent = 'Seed this public key on the demo platform (POST /v1/admin/institutions) — then platform payers can verify this bank\u2019s QRs.';
+      } catch {
+        $('keyPill').textContent = 'key: none';
+        $('keyPill').className = 'pill warn';
+        $('fp').textContent = '— no keypair yet';
+        $('keyMsg').className = 'msg err';
+        $('keyMsg').textContent = 'No signing key — generate one below before producing QRs.';
+      }
+    }
+
+    async function initBranding() {
+      const h = await api('/healthz');
+      const first = (h.bankName || 'S').trim().charAt(0).toUpperCase() || 'S';
+      $('mono').textContent = first;
+      $('rMono').textContent = first;
+      $('bankName').textContent = h.bankName;
+      $('tagline').textContent = h.bankTagline || '';
+      $('product').textContent = h.product || '';
+      $('institutionId').textContent = `Institution ${h.institutionId}`;
+      document.title = `${h.product} — ${h.bankName} (Simulation)`;
+    }
+
+    async function initCustomers() {
+      try {
+        const { customers } = await api('/api/customers');
+        for (const c of customers) {
+          const opt = document.createElement('option');
+          opt.value = JSON.stringify(c);
+          opt.textContent = `${c.name} · ${c.accountNumber}`;
+          $('cust').appendChild(opt);
+        }
+      } catch {
+        // roster is optional — manual entry still works
+      }
+    }
+
+    $('cust').addEventListener('change', () => {
+      if (!$('cust').value) return;
+      const c = JSON.parse($('cust').value);
+      $('name').value = c.name;
+      $('pan').value = c.accountNumber;
+    });
+
+    $('rotate').addEventListener('click', async () => {
+      if (!(await confirm('Generate a NEW keypair? The old public key stops signing new QRs until re-registered on the platform.'))) return;
+      $('keyMsg').className = 'msg';
+      $('keyMsg').textContent = 'Generating…';
+      try {
+        await api('/api/keys/generate', { method: 'POST' });
+        await loadKeyInfo();
+      } catch (e) {
+        $('keyMsg').className = 'msg err';
+        $('keyMsg').textContent = e.message;
+      }
+    });
+
+    $('gen').addEventListener('click', async () => {
+      const name = $('name').value.trim();
+      const pan = $('pan').value.trim();
+      const amount = $('amount').value.trim();
+      const msg = $('qrMsg');
+      if (!name || !pan) {
+        msg.className = 'msg err';
+        msg.textContent = 'Account name and account number are required.';
+        return;
+      }
+      msg.className = 'msg';
+      msg.textContent = 'Signing…';
+      try {
+        const r = await api('/api/qr/generate', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ accountName: name, accountNumber: pan, amount: amount || undefined }),
+        });
+        $('rBank').textContent = r.bankName;
+        $('rProduct').textContent = `${r.product} · QR generated ${new Date(r.generatedAt).toLocaleString()}`;
+        $('rRef').textContent = r.reference;
+        $('rInst').textContent = r.institutionId;
+        $('rPayee').textContent = `${r.accountName} · ${r.accountNumber}`;
+        $('rAmount').textContent = r.amount ? `৳ ${Number(r.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : 'Any amount (static QR)';
+        $('rPayload').textContent = r.signedPayload;
+        $('rSig').textContent = r.signatureBase64;
+        $('rEmv').value = r.emvcoString;
+        $('qrImg').src = r.qrPngDataUrl;
+        $('dl').href = r.qrPngDataUrl;
+        $('dl').download = `p2p-qr-${r.institutionId}.png`;
+        $('dl').hidden = false;
+        $('resultCard').hidden = false;
+        $('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        msg.className = 'msg ok';
+        msg.textContent = 'Signed. Scan the QR with a platform payer app, or paste the EMVCo string into ValidateQr.';
+      } catch (e) {
+        msg.className = 'msg err';
+        msg.textContent = e.message;
+      }
+    });
+
+    async function copy(text, btn) {
+      try {
+        await navigator.clipboard.writeText(text);
+        const old = btn.textContent;
+        btn.textContent = 'Copied ✓';
+        setTimeout(() => (btn.textContent = old), 1200);
+      } catch {
+        btn.textContent = 'Copy failed — select manually';
+      }
+    }
+    $('copyPub').addEventListener('click', () => copy($('pubPem').value, $('copyPub')));
+    $('copyEmv').addEventListener('click', () => copy($('rEmv').value, $('copyEmv')));
+
+    // ── Theme toggle ──────────────────────────────────────────────────
+    // data-theme was resolved pre-paint in <head>; this only flips it on
+    // demand and remembers the choice (system preference is the default).
+    const themeBtn = $('themeToggle');
+    function paintToggle() {
+      const dark = document.documentElement.dataset.theme === 'dark';
+      themeBtn.textContent = dark ? '☀️' : '🌙';
+      themeBtn.title = dark ? 'Switch to light mode' : 'Switch to dark mode';
+      themeBtn.setAttribute('aria-label', themeBtn.title);
+    }
+    themeBtn.addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem('extbank-theme', next);
+      paintToggle();
+    });
+    paintToggle();
+
+    initBranding().catch(() => {});
+    initCustomers().catch(() => {});
+    loadKeyInfo();
+  </script>
+</body>
+</html>

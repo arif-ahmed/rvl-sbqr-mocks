@@ -13,6 +13,10 @@
 # FI needs its own BFF pointed at that FI's IdP:
 #   Auth__Authority=http://localhost:5105 Auth__Issuer=http://localhost:5105 ...
 #
+# ext-bank-mock is the external (non-tenant) bank stand-in on :5205 — its
+# QRs verify on the platform purely from the admin-seeded trust-directory
+# public key (Option A: docs/external-bank-mock-option-a.md).
+#
 # bb-trust-store-mock and hsm-mock are still scaffolding (FROM scratch
 # placeholders) — uncomment their sections once implemented.
 #
@@ -67,6 +71,32 @@ services:
   #     - "5201:5201"
   #   restart: unless-stopped
 
+  # ext-bank-mock — external (non-tenant) bank stand-in, Option A zero
+  # migration (workspace doc: docs/external-bank-mock-option-a.md).
+  # Owns its Ed25519 keypair; an admin seeds the public key via
+  # POST /v1/admin/institutions and the platform's unchanged verify path
+  # accepts its QRs. The volume keeps the private key stable across
+  # restarts/rebuilds (a fresh key would orphan the registered public key).
+  ext-bank-mock:
+    build:
+      context: ./services/external-bank-mock
+      dockerfile: Dockerfile
+    container_name: sbqr-mocks-ext-bank
+    environment:
+      PORT: "5205"
+      BANK_ID: shapla
+      BANK_NAME: "Shapla Commercial Bank PLC"
+      BANK_TAGLINE: "Banking for every rhythm of life"
+      BANK_PRODUCT: "Shapla Pay"
+      # 6-digit Institution_ID = type 03 + reserved 99xx institution code.
+      INSTITUTION_ID: "039999"
+      PRIVATE_KEY_PEM_PATH: /keys/ed25519-private.pem
+    volumes:
+      - ext-bank-keys:/keys
+    ports:
+      - "5205:5205"
+    restart: unless-stopped
+
   # bb-trust-store-mock:
   #   build:
   #     context: ./services/bb-trust-store-mock
@@ -78,3 +108,6 @@ services:
   #     context: ./services/hsm-mock
   #     dockerfile: Dockerfile
   #   # TODO: wire up when hsm-mock is implemented.
+
+volumes:
+  ext-bank-keys:

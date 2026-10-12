@@ -1,0 +1,10 @@
+{
+  "customers": [
+    { "name": "Areeba Nawar", "accountNumber": "01711111111" },
+    { "name": "Rahim Uddin", "accountNumber": "15021000987" },
+    { "name": "Nusrat Jahan", "accountNumber": "19033004512" },
+    { "name": "Sabbir Ahmed", "accountNumber": "01822446688" },
+    { "name": "Farhana Rahman", "accountNumber": "16098003241" },
+    { "name": "Mizanur Rahman", "accountNumber": "01911557799" }
+  ]
+}

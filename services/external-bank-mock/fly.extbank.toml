@@ -1,0 +1,44 @@
+# Fly.io config for the demo instance of external-bank-mock.
+# Deploy with `fly deploy -c fly.extbank.toml`. The mounted volume keeps the
+# Ed25519 private key stable across machine restarts — without it, every
+# restart mints a fresh key and the public key seeded on the platform stops
+# matching (QRs fail with INVALID_SIGNATURE until re-registered).
+#
+# DEMO SERVICE: fictional bank identity (see README "Branding & deploy
+# safety"); every response carries X-Robots-Tag: noindex and the UI shows
+# a simulation banner — a public deploy must never read as a real bank.
+app = 'extbank-mock'
+primary_region = 'sin'
+
+[env]
+  PORT = '8080'
+  BANK_ID = 'shapla'
+  BANK_NAME = 'Shapla Commercial Bank PLC'
+  BANK_TAGLINE = 'Banking for every rhythm of life'
+  BANK_PRODUCT = 'Shapla Pay'
+  INSTITUTION_ID = '039999'
+  CITY = 'DHAKA'
+  PRIVATE_KEY_PEM_PATH = '/keys/ed25519-private.pem'
+
+[[mounts]]
+  source = 'extbank_keys'
+  destination = '/keys'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = '10s'
+    interval = '30s'
+    method = 'GET'
+    path = '/healthz'
+    timeout = '2s'
+
+[[vm]]
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 256

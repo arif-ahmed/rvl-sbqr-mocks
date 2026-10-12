@@ -1,0 +1,17 @@
+{
+  "name": "external-bank-mock",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mock external (non-tenant) bank: owns its Ed25519 keypair and a BanglaQR P2P QR generator UI; the SBQR platform verifies its QRs from the trust-directory public key alone",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
+}
